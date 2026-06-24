@@ -5,7 +5,7 @@ import org.vote.enums.UserRole;
 
 @Data
 public class UserDTO {
-    private int id;
+    private Long id;
     private String email;
     private String firstName;
     private String lastName;

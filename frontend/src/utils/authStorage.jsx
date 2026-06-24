@@ -1,3 +1,5 @@
+import { jwtDecode } from "jwt-decode";
+
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 
@@ -15,7 +17,33 @@ export function getUser() {
   return user ? JSON.parse(user) : null;
 }
 
+export function removeToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
 export function clearAuthData() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+}
+
+export function decodeToken() {
+  const token = getToken();
+
+  if (!token) return null;
+
+  try {
+    return jwtDecode(token);
+  } catch (error) {
+    console.error("Failed to decode token", error);
+    return null;
+  }
+}
+
+export function isTokenValid() {
+  const decodedToken = decodeToken();
+
+  if (!decodedToken || !decodedToken.exp) return false;
+
+  const expiry = decodedToken.exp * 1000;
+  return Date.now() < expiry;
 }

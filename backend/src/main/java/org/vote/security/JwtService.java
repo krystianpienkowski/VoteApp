@@ -4,23 +4,30 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.vote.entities.User;
+import org.vote.repositories.UserRepository;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Optional;
 import java.util.function.Function;
 
-
 @Component
+@RequiredArgsConstructor
 public class JwtService {
-
 
     @Value("${jwt.secret}")
     private String jwtSecret;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    private final UserRepository userRepository;
 
     public String generateToken(String username) {
         return Jwts.builder()
@@ -31,10 +38,23 @@ public class JwtService {
                 .compact();
     }
 
+    public User getLoggedInUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            User user = (User) authentication.getPrincipal();
+
+            Optional<User> optionalUser = userRepository.findById(user.getId());
+
+            return optionalUser.orElse(null);
+        }
+
+        return null;
+    }
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
-
     }
 
     private Claims extractAllClaims(String token) {
