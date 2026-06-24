@@ -1,6 +1,6 @@
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useState } from "react";
-import { getAllPolls } from "../services/poll";
+import { getAllPolls, votePoll } from "../services/poll";
 
 const Dashboard = () => {
     const [polls, setPolls] = useState([]);
@@ -40,24 +40,36 @@ const Dashboard = () => {
     };
 
     const handleVote = async (pollId) => {
-        const selectedOptionId = selectedOptions[pollId];
+    const selectedOptionId = selectedOptions[pollId];
 
-        if (!selectedOptionId) {
-            enqueueSnackbar("Choose an option first", {
-                variant: "warning",
-                autoHideDuration: 4000,
-            });
-            return;
-        }
+    if (selectedOptionId == null) {
+        enqueueSnackbar("Choose an option first", {
+            variant: "warning",
+            autoHideDuration: 4000,
+        });
+        return;
+    }
 
-        console.log("Poll id:", pollId);
-        console.log("Selected option id:", selectedOptionId);
+    setLoading(true);
 
-        enqueueSnackbar("Vote endpoint is not connected yet", {
-            variant: "info",
+    try {
+        await votePoll(pollId, selectedOptionId);
+
+        enqueueSnackbar("Vote submitted", {
+            variant: "success",
             autoHideDuration: 5000,
         });
-    };
+
+        await fetchData();
+    } catch (error) {
+        enqueueSnackbar("Voting failed", {
+            variant: "error",
+            autoHideDuration: 5000,
+        });
+    } finally {
+        setLoading(false);
+    }
+};
 
     const formatDate = (date) => {
         if (!date) {

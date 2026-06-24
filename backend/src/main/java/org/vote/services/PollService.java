@@ -12,8 +12,8 @@ import org.vote.repositories.OptionsRepository;
 import org.vote.repositories.PollRepository;
 import org.vote.repositories.VoteRepository;
 import org.vote.security.JwtService;
+import org.vote.entities.Vote;
 
-import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -121,5 +121,49 @@ public class PollService {
                     .collect(Collectors.toList());
         }
         throw new EntityNotFoundException("User not found");
+    }
+
+    public void vote(Long pollId, Long optionId) {
+        User user = jwtService.getLoggedInUser();
+
+        if (user == null) {
+            throw new EntityNotFoundException("User not found");
+        }
+
+        Poll poll = pollRepository.findById(pollId)
+                .orElseThrow(() -> new EntityNotFoundException("Poll not found"));
+
+        Options option = optionsRepository.findById(optionId)
+                .orElseThrow(() -> new EntityNotFoundException("Option not found"));
+
+        if (!option.getPoll().getId().equals(poll.getId())) {
+            throw new IllegalArgumentException("Option does not belong to this poll");
+        }
+
+        if (poll.getExpiredAt() != null && poll.getExpiredAt().before(new Date())) {
+            throw new IllegalArgumentException("Poll has expired");
+        }
+
+        boolean alreadyVoted = voteRepository.existsByPollIdAndUserId(
+                poll.getId(),
+                user.getId()
+        );
+
+        if (alreadyVoted) {
+            throw new IllegalArgumentException("User has already voted in this poll");
+        }
+
+        Vote vote = new Vote();
+        vote.setUser(user);
+        vote.setPoll(poll);
+        vote.setOptions(option);
+
+        voteRepository.save(vote);
+
+        option.setVoteCount(option.getVoteCount() + 1);
+        optionsRepository.save(option);
+
+        poll.setTotalVoteCount(poll.getTotalVoteCount() + 1);
+        pollRepository.save(poll);
     }
 }

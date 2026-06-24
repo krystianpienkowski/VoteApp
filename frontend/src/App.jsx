@@ -5,7 +5,6 @@ import Login from "./pages/Login"
 import Dashboard from "./pages/Dashboard"
 import CreatePoll from "./pages/CreatePoll"
 import ViewMyPolls from "./pages/MyPolls"
-import ViewPollDetails from "./pages/PollDetails"
 import Home from "./pages/Home";
 
 function App() {
@@ -19,7 +18,6 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />}/>
         <Route path="/poll/create" element={<CreatePoll />}/>
         <Route path="/mypolls" element={<ViewMyPolls />}/>
-        <Route path="/poll/:id/:view" element={<ViewPollDetails />}/>
         <Route path="/" element={<Home />} />
       </Routes>
     </>
